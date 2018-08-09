@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import kotlinx.android.synthetic.main.fragment_second_page.view.*
 
 /**
  * A simple [Fragment] subclass.
@@ -27,7 +28,9 @@ class SecondPageFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_second_page, container, false)
+        return inflater.inflate(R.layout.fragment_second_page, container, false).apply {
+            timer_button.setOnClickListener { listener?.onStartTimerClicked() }
+        }
     }
 
     override fun onAttach(context: Context) {
@@ -55,7 +58,10 @@ class SecondPageFragment : Fragment() {
      * (http://developer.android.com/training/basics/fragments/communicating.html)
      * for more information.
      */
-    interface OnFragmentInteractionListener
+    interface OnFragmentInteractionListener {
+        fun onStartTimerClicked()
+    }
+
 
     companion object {
         /**
