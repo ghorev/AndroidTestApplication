@@ -3,9 +3,15 @@ package com.ghorev.testapplication
 import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.support.v7.widget.LinearLayoutManager
+import android.support.v7.widget.RecyclerView
+import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import kotlinx.android.synthetic.main.fragment_first_page.view.*
+import kotlinx.android.synthetic.main.item_list_row.view.*
+import java.util.*
 
 /**
  * A simple [Fragment] subclass.
@@ -17,6 +23,52 @@ import android.view.ViewGroup
  *
  */
 class FirstPageFragment : Fragment() {
+    private class Row(val longText: String, val time: Date)
+
+    private class Model {
+        private var data = mutableListOf<Row>()
+
+        init {
+            val date = Date()
+            for (i in 1..50)
+                data.add(Row((1..i).joinToString(" - "), date))
+        }
+
+        val size: Int
+            get() = data.size
+
+        fun getRow(i: Int) = data[i]
+    }
+
+
+    private val model = Model()
+
+    private class RowHolder(inflater: LayoutInflater, parent: ViewGroup) :
+            RecyclerView.ViewHolder(inflater.inflate(R.layout.item_list_row, parent, false))
+    {
+        fun bind(row: Row) {
+            itemView.long_text.text = row.longText
+            itemView.time_text.text = DateFormat.format("dd/MM/yyyy hh:mm:ss", row.time)
+        }
+
+    }
+
+
+    private class ListAdapter(val model: Model) : RecyclerView.Adapter<RowHolder>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RowHolder {
+            val inflater = LayoutInflater.from(parent.context)
+            return RowHolder(inflater, parent)
+        }
+
+        override fun getItemCount(): Int = model.size
+
+        override fun onBindViewHolder(holder: RowHolder, position: Int) {
+            holder.bind(model.getRow(position))
+        }
+
+    }
+
+
     private var listener: OnFragmentInteractionListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,7 +78,10 @@ class FirstPageFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_first_page, container, false)
+        val view = inflater.inflate(R.layout.fragment_first_page, container, false)
+        view.recycler_view.layoutManager = LinearLayoutManager(activity)
+        view.recycler_view.adapter = ListAdapter(model)
+        return view
     }
 
     override fun onAttach(context: Context) {
