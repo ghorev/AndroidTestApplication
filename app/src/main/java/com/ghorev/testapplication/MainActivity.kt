@@ -3,7 +3,7 @@ package com.ghorev.testapplication
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import io.reactivex.Observable
+import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import java.util.concurrent.TimeUnit
 
@@ -76,15 +76,14 @@ class MainActivity : AppCompatActivity(),
             }
 
         fun add(secs: Long) {
-            Observable.interval(1, TimeUnit.SECONDS).
-                    take(secs).
-                    subscribeOn(AndroidSchedulers.mainThread()).
-                    subscribe({}, {}, {
+            Completable.timer(secs, TimeUnit.SECONDS).
+                    observeOn(AndroidSchedulers.mainThread()).
+                    subscribe {
                         if (activity != null)
                             activity!!.showTimeoutDialog()
                         else
                             skipped = true
-                    })
+                    }
         }
     }
 }
