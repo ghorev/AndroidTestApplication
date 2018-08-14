@@ -9,7 +9,7 @@ annotation class ContentSize
 
 @Singleton
 class TableContent @Inject constructor(@ContentSize context: TestApplication, size: Int = 50) {
-    class Record(val longText: String, val time: Date)
+    open class Record(var text: String, var date: Date)
 
     private var content = mutableListOf<Record>()
 

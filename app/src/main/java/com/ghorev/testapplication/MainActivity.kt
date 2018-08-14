@@ -9,7 +9,6 @@ import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(),
         StartPageFragment.OnFragmentInteractionListener,
-        FirstPageFragment.OnFragmentInteractionListener,
         SecondPageFragment.OnFragmentInteractionListener,
         UiTimer.Listener
 {
@@ -57,6 +56,7 @@ class MainActivity : AppCompatActivity(),
 
         var fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
         if (fragment == null) {
+            Log.d(getString(R.string.app_name), "Create fragment")
             fragment = StartPageFragment.newInstance()
             supportFragmentManager.beginTransaction().
                     add(R.id.fragment_container, fragment).

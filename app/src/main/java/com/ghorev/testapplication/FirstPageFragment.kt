@@ -1,25 +1,24 @@
 package com.ghorev.testapplication
 
 import android.content.Context
+import android.databinding.DataBindingUtil
+import android.databinding.Observable
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import dagger.android.AndroidInjection
+import com.ghorev.testapplication.databinding.ItemListRowBinding
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.main.fragment_first_page.view.*
-import kotlinx.android.synthetic.main.item_list_row.view.*
+import java.util.*
 import javax.inject.Inject
 
 class FirstPageFragment : Fragment() {
     @Inject
     lateinit var content: TableContent
-
-    private var listener: OnFragmentInteractionListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,32 +35,28 @@ class FirstPageFragment : Fragment() {
     override fun onAttach(context: Context) {
         AndroidSupportInjection.inject(this)
         super.onAttach(context)
-        if (context is OnFragmentInteractionListener) {
-            listener = context
-        } else {
-            throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
-        }
     }
 
-    override fun onDetach() {
-        super.onDetach()
-        listener = null
-    }
-
-    private class RowHolder(inflater: LayoutInflater, parent: ViewGroup) :
-            RecyclerView.ViewHolder(inflater.inflate(R.layout.item_list_row, parent, false))
+    private class RowHolder(private val binding: ItemListRowBinding) :
+            RecyclerView.ViewHolder(binding.root)
     {
-        fun bind(row: TableContent.Record) {
-            itemView.long_text.text = row.longText
-            itemView.time_text.text = DateFormat.format("dd/MM/yyyy hh:mm:ss", row.time)
+        init {
+            binding.viewModel = RecordViewModel(TableContent.Record("", Date()))
         }
-
+        fun bind(record: TableContent.Record) {
+            binding.viewModel!!.record = record
+        }
     }
 
     private class ListAdapter(private val content: TableContent) : RecyclerView.Adapter<RowHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RowHolder {
-            val inflater = LayoutInflater.from(parent.context)
-            return RowHolder(inflater, parent)
+            val binding: ItemListRowBinding =
+                    DataBindingUtil.inflate(
+                            LayoutInflater.from(parent.context),
+                            R.layout.item_list_row,
+                            parent,
+                            false)
+            return RowHolder(binding)
         }
 
         override fun getItemCount(): Int = content.size
@@ -71,8 +66,6 @@ class FirstPageFragment : Fragment() {
         }
 
     }
-
-    interface OnFragmentInteractionListener
 
     companion object {
         @JvmStatic

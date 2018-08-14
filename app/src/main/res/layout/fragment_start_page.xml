@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data>
+        <variable
+            name="listener"
+            type="com.ghorev.testapplication.StartPageFragment.OnFragmentInteractionListener"/>
+    </data>
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -13,7 +19,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:elevation="0dp"
+            android:onClick="@{(view)-> listener.onFirstPageButtonClicked()}"
             android:text="@string/page1_name"
             app:layout_constraintBottom_toTopOf="@id/page2_button"
             app:layout_constraintEnd_toEndOf="parent"
@@ -29,11 +35,12 @@
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
+            android:onClick="@{(view)-> listener.onSecondPageButtonClicked()}"
             android:text="@string/page2_name"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/page1_button"
-            app:layout_constraintVertical_chainStyle="packed"/>
+            app:layout_constraintTop_toBottomOf="@id/page1_button"
+            app:layout_constraintVertical_chainStyle="packed" />
     </android.support.constraint.ConstraintLayout>
 </layout>
