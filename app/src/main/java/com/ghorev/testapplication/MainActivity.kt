@@ -3,15 +3,31 @@ package com.ghorev.testapplication
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import io.reactivex.Completable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import java.util.concurrent.TimeUnit
+import dagger.*
+import dagger.android.AndroidInjection
+import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(),
         StartPageFragment.OnFragmentInteractionListener,
         FirstPageFragment.OnFragmentInteractionListener,
-        SecondPageFragment.OnFragmentInteractionListener
+        SecondPageFragment.OnFragmentInteractionListener,
+        UiTimer.Listener
 {
+    @Inject
+    lateinit var activityDependency: MainActivityDependency
+
+    @Inject
+    lateinit var otherActivityDependency: OtherMainActivityDependency
+
+    @Inject
+    lateinit var globalDependency: GlobalDependency
+
+    @Inject
+    lateinit var otherGlobalDependency: OtherGlobalDependency
+
+    @Inject
+    lateinit var timer: UiTimer
+
     private val TIMEOUT_DIALOG_TAG = "TimeoutDialog"
 
     override fun onFirstPageButtonClicked() {
@@ -22,11 +38,21 @@ class MainActivity : AppCompatActivity(),
         supportFragmentManager.beginTransaction().replace(R.id.fragment_container, SecondPageFragment.newInstance()).commit()
     }
     override fun onStartTimerClicked() {
-        Timers.add(5)
+        timer.start(5)
     }
+
+    override fun onTimeout() {
+        showTimeoutDialog()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d(getString(R.string.app_name), "MainActivity::onCreate")
+        AndroidInjection.inject(this)
         super.onCreate(savedInstanceState)
+        Log.d(getString(R.string.app_name), "MainActivity::onCreate")
+        Log.d(getString(R.string.app_name), globalDependency.text)
+        Log.d(getString(R.string.app_name), otherGlobalDependency.text)
+        Log.d(getString(R.string.app_name), activityDependency.text)
+        Log.d(getString(R.string.app_name), otherActivityDependency.text)
         setContentView(R.layout.activity_main)
 
         var fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
@@ -41,13 +67,13 @@ class MainActivity : AppCompatActivity(),
     override fun onResume() {
         Log.d(getString(R.string.app_name), "onResume")
         super.onResume()
-        Timers.activity = this
+        timer.listner = this
     }
 
     override fun onPause() {
         Log.d(getString(R.string.app_name), "onPause")
         super.onPause()
-        Timers.activity = null
+        timer.listner = null
     }
 
     override fun onBackPressed() {
@@ -63,27 +89,33 @@ class MainActivity : AppCompatActivity(),
         else
             Log.d(getString(R.string.app_name), "Dialog is already shown")
     }
+}
 
-    private companion object Timers {
-        private var skipped = false
-        var activity: MainActivity? = null
-            set(it) {
-                field = it
-                if (it != null && skipped) {
-                    activity!!.showTimeoutDialog()
-                }
-                skipped = false
-            }
+interface MainActivityDependency {
+    val text: String
+}
 
-        fun add(secs: Long) {
-            Completable.timer(secs, TimeUnit.SECONDS).
-                    observeOn(AndroidSchedulers.mainThread()).
-                    subscribe {
-                        if (activity != null)
-                            activity!!.showTimeoutDialog()
-                        else
-                            skipped = true
-                    }
-        }
+@ActivityScope
+class MainActivityDependencyImpl @Inject constructor(context: MainActivity) : MainActivityDependency {
+    init {
+        Log.d(context.getString(R.string.app_name), "Create MainActivityDependency")
     }
+
+    override val text: String = context.componentName.className
+}
+
+@ActivityScope
+class OtherMainActivityDependency @Inject constructor(context: MainActivity) {
+    init {
+        Log.d(context.getString(R.string.app_name), "Create OtherMainActivityDependency")
+    }
+
+    val text: String = context.componentName.shortClassName
+}
+
+@Module
+interface MainActivityModule {
+    @Binds
+    @ActivityScope
+    fun dependency(instance: MainActivityDependencyImpl) : MainActivityDependency
 }
