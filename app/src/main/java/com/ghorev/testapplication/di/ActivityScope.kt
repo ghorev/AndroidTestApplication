@@ -1,4 +1,4 @@
-package com.ghorev.testapplication
+package com.ghorev.testapplication.di
 
 import javax.inject.Scope
 

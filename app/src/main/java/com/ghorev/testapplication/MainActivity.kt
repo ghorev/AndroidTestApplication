@@ -1,121 +1,97 @@
 package com.ghorev.testapplication
 
+import android.arch.lifecycle.Observer
+import android.content.Intent
 import android.os.Bundle
+import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
-import dagger.*
-import dagger.android.AndroidInjection
+import com.ghorev.testapplication.navigation.NavigationController
+import com.ghorev.testapplication.navigation.PageId
+import com.ghorev.testapplication.ui.first.FirstPageFragment
+import com.ghorev.testapplication.ui.second.SecondPageFragment
+import com.ghorev.testapplication.ui.start.StartPageFragment
+import com.ghorev.testapplication.ui.timeout.TimeoutFragment
+import dagger.android.DispatchingAndroidInjector
+import dagger.android.support.HasSupportFragmentInjector
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(),
-        StartPageFragment.OnFragmentInteractionListener,
-        SecondPageFragment.OnFragmentInteractionListener,
-        UiTimer.Listener
+        HasSupportFragmentInjector
 {
     @Inject
-    lateinit var activityDependency: MainActivityDependency
+    lateinit var fragmentInjector: DispatchingAndroidInjector<Fragment>
 
     @Inject
-    lateinit var otherActivityDependency: OtherMainActivityDependency
-
-    @Inject
-    lateinit var globalDependency: GlobalDependency
-
-    @Inject
-    lateinit var otherGlobalDependency: OtherGlobalDependency
-
-    @Inject
-    lateinit var timer: UiTimer
+    lateinit var navigation: NavigationController
 
     private val TIMEOUT_DIALOG_TAG = "TimeoutDialog"
 
-    override fun onFirstPageButtonClicked() {
-        supportFragmentManager.beginTransaction().replace(R.id.fragment_container, FirstPageFragment.newInstance()).commit()
-    }
+    private val navigationFragment = object: Fragment() {
+        override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+            super.onActivityResult(requestCode, resultCode, data)
 
-    override fun onSecondPageButtonClicked() {
-        supportFragmentManager.beginTransaction().replace(R.id.fragment_container, SecondPageFragment.newInstance()).commit()
-    }
-    override fun onStartTimerClicked() {
-        timer.start(5)
-    }
-
-    override fun onTimeout() {
-        showTimeoutDialog()
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        AndroidInjection.inject(this)
-        super.onCreate(savedInstanceState)
-        Log.d(getString(R.string.app_name), "MainActivity::onCreate")
-        Log.d(getString(R.string.app_name), globalDependency.text)
-        Log.d(getString(R.string.app_name), otherGlobalDependency.text)
-        Log.d(getString(R.string.app_name), activityDependency.text)
-        Log.d(getString(R.string.app_name), otherActivityDependency.text)
-        setContentView(R.layout.activity_main)
-
-        var fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-        if (fragment == null) {
-            Log.d(getString(R.string.app_name), "Create fragment")
-            fragment = StartPageFragment.newInstance()
-            supportFragmentManager.beginTransaction().
-                    add(R.id.fragment_container, fragment).
-                    commit()
         }
     }
 
-    override fun onResume() {
-        Log.d(getString(R.string.app_name), "onResume")
-        super.onResume()
-        timer.listner = this
-    }
+    override fun supportFragmentInjector() = fragmentInjector
 
-    override fun onPause() {
-        Log.d(getString(R.string.app_name), "onPause")
-        super.onPause()
-        timer.listner = null
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        navigation.currentFrame.observe(this, Observer<PageId> { t ->
+            t?.let {
+                showPage(it)
+            }
+        })
+
+        navigation.showDialog.observe(this, Observer<Boolean>{ t ->
+            t?.let {
+                if (t) {
+                    showDialog()
+                }
+            }
+        })
+
+        navigation.currentFrame.value?.let {
+            showPage(it)
+        }
+
+        if (navigation.showDialog.value != false) {
+            showDialog()
+        }
     }
 
     override fun onBackPressed() {
         if (supportFragmentManager.findFragmentById(R.id.fragment_container) !is StartPageFragment)
-            supportFragmentManager.beginTransaction().replace(R.id.fragment_container, StartPageFragment.newInstance()).commit()
+            navigation.currentFrame.value = PageId.START
         else
             super.onBackPressed()
     }
 
-    private fun showTimeoutDialog() {
-        if (supportFragmentManager.findFragmentByTag(TIMEOUT_DIALOG_TAG) == null)
+    private fun showDialog() {
+        if (supportFragmentManager.findFragmentByTag(TIMEOUT_DIALOG_TAG) == null) {
             TimeoutFragment().show(supportFragmentManager, TIMEOUT_DIALOG_TAG)
-        else
-            Log.d(getString(R.string.app_name), "Dialog is already shown")
-    }
-}
-
-interface MainActivityDependency {
-    val text: String
-}
-
-@ActivityScope
-class MainActivityDependencyImpl @Inject constructor(context: MainActivity) : MainActivityDependency {
-    init {
-        Log.d(context.getString(R.string.app_name), "Create MainActivityDependency")
+        }
     }
 
-    override val text: String = context.componentName.className
-}
-
-@ActivityScope
-class OtherMainActivityDependency @Inject constructor(context: MainActivity) {
-    init {
-        Log.d(context.getString(R.string.app_name), "Create OtherMainActivityDependency")
+    private fun showPage(page: PageId) {
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        if (fragment == null) {
+            supportFragmentManager.beginTransaction().
+                    add(R.id.fragment_container, createFragment(page)).
+                    commit()
+        } else {
+            supportFragmentManager.beginTransaction().
+                    replace(R.id.fragment_container, createFragment(page)).
+                    commit()
+        }
+        navigation.currentFrame.value = null
     }
 
-    val text: String = context.componentName.shortClassName
-}
-
-@Module
-interface MainActivityModule {
-    @Binds
-    @ActivityScope
-    fun dependency(instance: MainActivityDependencyImpl) : MainActivityDependency
+    private fun createFragment(page: PageId) : Fragment =
+        when(page) {
+            PageId.START -> StartPageFragment.newInstance()
+            PageId.FIRST -> FirstPageFragment.newInstance()
+            PageId.SECOND -> SecondPageFragment.newInstance()
+        }
 }

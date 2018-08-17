@@ -3,9 +3,9 @@ package com.ghorev.testapplication
 import android.databinding.BaseObservable
 import android.databinding.Bindable
 import android.text.format.DateFormat
-import java.util.*
+import com.ghorev.testapplication.model.Content
 
-class RecordViewModel(record: TableContent.Record) : BaseObservable() {
+class RecordViewModel(record: Content.Record) : BaseObservable() {
     var record = record
     set(value) {
         field = value

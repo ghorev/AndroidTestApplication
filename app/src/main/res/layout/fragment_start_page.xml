@@ -4,8 +4,8 @@
 
     <data>
         <variable
-            name="listener"
-            type="com.ghorev.testapplication.StartPageFragment.OnFragmentInteractionListener"/>
+            name="viewModel"
+            type="com.ghorev.testapplication.ui.start.StartPageViewModel"/>
     </data>
     <android.support.constraint.ConstraintLayout
         android:layout_width="match_parent"
@@ -19,7 +19,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:onClick="@{(view)-> listener.onFirstPageButtonClicked()}"
+            android:onClick="@{()->viewModel.onFirstPageClicked()}"
             android:text="@string/page1_name"
             app:layout_constraintBottom_toTopOf="@id/page2_button"
             app:layout_constraintEnd_toEndOf="parent"
@@ -35,7 +35,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="8dp"
-            android:onClick="@{(view)-> listener.onSecondPageButtonClicked()}"
+            android:onClick="@{()->viewModel.onSecondPageClicked()}"
             android:text="@string/page2_name"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
